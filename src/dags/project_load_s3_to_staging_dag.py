@@ -11,27 +11,21 @@ import json
 
 
 conn_info =  json.loads(Variable.get("VERTICA_CONN_INFO"))
-
+AWS_ACCESS_KEY_ID = Variable.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = Variable.get("AWS_SECRET_ACCESS_KEY")
 
 def fetch_s3_file(bucket: str, key: str):
 
-    AWS_ACCESS_KEY_ID = Variable.get("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = Variable.get("AWS_SECRET_ACCESS_KEY")
+    
 
     session = boto3.session.Session()
 
-    s3_client = session.client(
-        service_name='s3',
-        endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    )
-
-    s3_client.download_file(
-        Bucket=bucket,
-        Key=key,
-        Filename=f'/data/{key}'
-    ) 
+    with session.client(service_name='s3', endpoint_url='https://storage.yandexcloud.net', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY) as s3_client:
+        s3_client.download_file(
+            Bucket=bucket,
+            Key=key,
+            Filename=f'/data/{key}'
+        ) 
   
 def transform_csv_file():
     df_group_log = pd.read_csv('/data/group_log.csv')
@@ -45,8 +39,8 @@ def load_to_vertica_staging(conn_params=conn_info):
                 cur.copy(
                             """
                                 copy STV2023100611__STAGING.group_log (
-                                    group_id,user_id,user_id_from,event,datetime)  
-                                     FROM STDIN 
+                                    group_id,user_id,user_id_from,event,event_dt)  
+                                    FROM STDIN 
                                     DELIMITER ','
                                     REJECTED DATA AS TABLE group_log_rej;
                             """, fs
