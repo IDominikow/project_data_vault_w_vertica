@@ -1,2 +1,2 @@
-# Проект 6-го спринта
+# Designing Data Vault model with Vertica
 
